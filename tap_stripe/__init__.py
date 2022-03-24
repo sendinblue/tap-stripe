@@ -15,7 +15,8 @@ from singer import metadata
 REQUIRED_CONFIG_KEYS = [
     "start_date",
     "account_id",
-    "client_secret"
+    "client_secret",
+    "schemaless"
 ]
 STREAM_SDK_OBJECTS = {
     'charges': {'sdk_object': stripe.Charge, 'key_properties': ['id']},
@@ -474,9 +475,10 @@ def sync_stream(stream_name):
 
                 # sync stream if object is greater than or equal to the bookmark
                 if stream_obj_created >= stream_bookmark:
-                    rec = transformer.transform(rec,
-                                                Context.get_catalog_entry(stream_name)['schema'],
-                                                stream_metadata)
+                    if not Context.config.get("schemaless", False):
+                        rec = transformer.transform(rec,
+                                                    Context.get_catalog_entry(stream_name)['schema'],
+                                                    stream_metadata)
 
                     # At this point, the record has been transformed and so
                     # any de-selected fields have been pruned. Now, prune off
